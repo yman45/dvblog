@@ -1,0 +1,41 @@
+frr version 6.0
+frr defaults traditional
+hostname R2
+log syslog informational
+no ipv6 forwarding
+service integrated-vtysh-config
+username cumulus nopassword
+!
+interface eth1
+ ip router isis ISIS
+ isis circuit-type level-2-only
+ isis network point-to-point
+!
+interface eth2
+ ip router isis ISIS
+ isis circuit-type level-2-only
+ isis network point-to-point
+!
+interface lo
+ ip router isis ISIS
+ isis passive
+!
+mpls ldp
+ router-id 172.20.15.2
+ !
+ address-family ipv4
+  discovery transport-address 172.20.15.2
+  !
+  interface eth1
+  !
+  interface eth2
+  !
+ exit-address-family
+ !
+!
+router isis ISIS
+ net 49.0001.1720.2001.5002.00
+ metric-style wide
+!
+line vty
+!

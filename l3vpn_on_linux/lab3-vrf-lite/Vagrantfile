@@ -1,0 +1,42 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "pe1" do |pe1|
+      pe1.vm.box = "debian/stretch64"
+      pe1.vm.hostname = "PE1"
+      pe1.vm.network "private_network", ip: "192.168.11.1", virtualbox_intnet: "pe1ce1"
+      pe1.vm.network "private_network", ip: "192.168.12.1", virtualbox_intnet: "pe1ce2"
+      pe1.vm.network "private_network", ip: "192.168.66.1", virtualbox_intnet: "pe1pe2"
+      pe1.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+  config.vm.define "pe2" do |pe2|
+      pe2.vm.box = "debian/stretch64"
+      pe2.vm.hostname = "PE2"
+      pe2.vm.network "private_network", ip: "192.168.5.1", virtualbox_intnet: "pe2ce3"
+      pe2.vm.network "private_network", ip: "192.168.6.1", virtualbox_intnet: "pe2ce4"
+      pe2.vm.network "private_network", ip: "192.168.66.2", virtualbox_intnet: "pe1pe2"
+      pe2.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+  config.vm.define "ce1" do |ce1|
+      ce1.vm.box = "debian/stretch64"
+      ce1.vm.hostname = "CE1"
+      ce1.vm.network "private_network", ip: "192.168.11.10", virtualbox_intnet: "pe1ce1"
+      ce1.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+  config.vm.define "ce2" do |ce2|
+      ce2.vm.box = "debian/stretch64"
+      ce2.vm.hostname = "CE2"
+      ce2.vm.network "private_network", ip: "192.168.12.10", virtualbox_intnet: "pe1ce2"
+      ce2.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+  config.vm.define "ce3" do |ce3|
+      ce3.vm.box = "debian/stretch64"
+      ce3.vm.hostname = "CE3"
+      ce3.vm.network "private_network", ip: "192.168.5.10", virtualbox_intnet: "pe2ce3"
+      ce3.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+  config.vm.define "ce4" do |ce4|
+      ce4.vm.box = "debian/stretch64"
+      ce4.vm.hostname = "CE4"
+      ce4.vm.network "private_network", ip: "192.168.6.10", virtualbox_intnet: "pe2ce4"
+      ce4.vm.provision "shell", path: "vrf_lite_provisioning"
+  end
+end

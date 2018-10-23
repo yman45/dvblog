@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+X=$(hostname)
+sudo sysctl net.ipv4.ip_forward=1
+sudo modprobe mpls_router
+sudo modprobe mpls_iptunnel
+sudo sysctl net.mpls.platform_labels=10000
+sudo sysctl net.mpls.conf.eth1.input=1
+if [[ "$X" = "R2" ]]; then
+    sudo sysctl net.mpls.conf.eth2.input=1
+fi
+sudo ip addr add 172.20.15.${X: -1}/32 dev lo
+wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr_6.0-1.debian9+1_amd64.deb
+wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-dbg_6.0-1.debian9+1_amd64.deb
+wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-pythontools_6.0-1.debian9+1_all.deb
+sudo apt install -y libc-ares2 libjson-c3 python-ipaddr tcpdump vim
+sudo dpkg -i frr_6.0-1.debian9+1_amd64.deb 
+sudo dpkg -i frr-dbg_6.0-1.debian9+1_amd64.deb 
+sudo dpkg -i frr-pythontools_6.0-1.debian9+1_all.deb 
+echo -e 'zebra=yes\nisisd=yes\nldpd=yes' > frr-daemons
+sudo mv frr-daemons /etc/frr/daemons
+sudo systemctl start frr.service

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+X=$(hostname)
+case "$X" in
+    PE*)
+        mpls_ints=("eth3")
+        loopback_addr="${X: -1}"
+        router_type="pe"
+        ;;
+    P*)
+        mpls_ints=("eth1" "eth2")
+        loopback_addr=5
+        router_type="p"
+        ;;
+    CE*)
+        loopback_addr="$(("${X: -1}"*10))"
+        router_type="ce"
+        ;;
+    *)
+        echo 'Invalid hostname'
+        exit 1
+        ;;
+esac
+
+sudo ip addr add 172.20.5."$loopback_addr"/32 dev lo
+sudo apt install -y tcpdump vim
+if [[ !("$router_type" =~ "ce") ]]; then
+    sudo sysctl net.ipv4.ip_forward=1
+    sudo sysctl net.ipv6.conf.all.disable_ipv6=0
+    sudo sysctl net.ipv6.conf.all.forwarding=1
+    sudo modprobe mpls_router
+    sudo modprobe mpls_iptunnel
+    sudo sysctl net.mpls.platform_labels=100000
+    for interface in "${mpls_ints[@]}"; do
+        sudo sysctl net.mpls.conf."$interface".input=1
+    done
+    wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr_6.0-1.debian9+1_amd64.deb
+    wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-dbg_6.0-1.debian9+1_amd64.deb
+    wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-pythontools_6.0-1.debian9+1_all.deb
+    sudo apt install -y libc-ares2 libjson-c3 python-ipaddr python3-jinja2
+    sudo dpkg -i frr_6.0-1.debian9+1_amd64.deb 
+    sudo dpkg -i frr-dbg_6.0-1.debian9+1_amd64.deb 
+    sudo dpkg -i frr-pythontools_6.0-1.debian9+1_all.deb 
+    echo -e 'zebra=yes\nbgpd=yes\nisisd=yes\nldpd=yes' > frr-daemons
+    sudo mv frr-daemons /etc/frr/daemons
+    python3 gen_frr_config.py
+    sudo mv frr_generated_config /etc/frr/frr.conf
+    sudo chown frr:frr /etc/frr/daemons
+    sudo chown frr:frr /etc/frr/frr.conf
+    sudo systemctl start frr.service
+else
+    ce_address=$(ip -br -4 address show eth1)
+    IFS=' ' read -ra addr <<< "$ce_address"
+    IFS='.' read -ra octets <<< "${addr[-1]}"
+    subnet=${octets[2]}
+    sudo ip route add 192.168.0.0/16 via 192.168."$subnet".100
+fi
+if [[ "$router_type" =~ "pe" ]]; then
+    sudo ip route add blackhole 0.0.0.0/0 table 10
+    sudo ip route add blackhole 0.0.0.0/0 table 20
+    sudo ip link add name vrf_cust1 type vrf table 10
+    sudo ip link add name vrf_cust2 type vrf table 20
+    sudo ip link set eth1 master vrf_cust1
+    sudo ip link set eth2 master vrf_cust2
+    sudo ip link set vrf_cust1 up
+    sudo ip link set vrf_cust2 up
+fi

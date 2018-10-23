@@ -1,0 +1,21 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "r1" do |r1|
+      r1.vm.box = "debian/stretch64"
+      r1.vm.hostname = "R1"
+      r1.vm.network "private_network", ip: "192.168.12.1", virtualbox_intnet: "nix12"
+      r1.vm.provision "shell", path: "static_lsp_provisioning"
+  end
+  config.vm.define "r2" do |r2|
+      r2.vm.box = "debian/stretch64"
+      r2.vm.hostname = "R2"
+      r2.vm.network "private_network", ip: "192.168.12.2", virtualbox_intnet: "nix12"
+      r2.vm.network "private_network", ip: "192.168.23.2", virtualbox_intnet: "nix23"
+      r2.vm.provision "shell", path: "static_lsp_provisioning"
+  end
+  config.vm.define "r3" do |r3|
+      r3.vm.box = "debian/stretch64"
+      r3.vm.hostname = "R3"
+      r3.vm.network "private_network", ip: "192.168.23.3", virtualbox_intnet: "nix23"
+      r3.vm.provision "shell", path: "static_lsp_provisioning"
+  end
+end

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+X=$(hostname)
+if [[ "$X" =~ "PE" ]]; then
+    self=${X: -1}
+    route2=$((${X: -1}*6))
+    route1=$(($route2-1))
+    if [[ "$X" = PE1 ]]; then
+        neighbor=2
+    else
+        neighbor=1
+    fi
+    sudo sysctl net.ipv4.ip_forward=1
+    sudo ip addr add 172.20.5.$self/32 dev lo
+    sudo ip addr del 192.168.66.$self/24 dev eth3
+    sudo ip link add link eth3 name vlan10 type vlan id 10
+    sudo ip link add link eth3 name vlan20 type vlan id 20
+    sudo ip addr add 172.30.10.$self/24 dev vlan10
+    sudo ip addr add 172.30.20.$self/24 dev vlan20
+    sudo ip link set vlan10 up
+    sudo ip link set vlan20 up
+    sudo ip route add blackhole 0.0.0.0/0 table 10
+    sudo ip route add blackhole 0.0.0.0/0 table 20
+    sudo ip link add name vrf_cust1 type vrf table 10
+    sudo ip link add name vrf_cust2 type vrf table 20
+    sudo ip link set eth1 master vrf_cust1
+    sudo ip link set vlan10 master vrf_cust1
+    sudo ip link set eth2 master vrf_cust2
+    sudo ip link set vlan20 master vrf_cust2
+    sudo ip link set vrf_cust1 up
+    sudo ip link set vrf_cust2 up
+    sudo ip route add 192.168.$route1.0/24 via 172.30.10.$neighbor table 10
+    sudo ip route add 192.168.$route2.0/24 via 172.30.20.$neighbor table 20
+else
+    case "$X" in 
+        CE1)
+            ceroute=0
+            router=11
+            ;;
+        CE2)
+            ceroute=0
+            router=12
+            ;;
+        CE3)
+            ceroute=8
+            router=5
+            ;;
+        CE4)
+            ceroute=8
+            router=6
+            ;;
+        *)
+            echo "bad hostname"
+            ;;
+    esac
+    sudo ip route add 192.168.$ceroute.0/21 via 192.168.$router.1
+fi
+sudo apt install -y tcpdump

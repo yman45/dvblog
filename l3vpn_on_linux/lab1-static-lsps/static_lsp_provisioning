@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+sudo apt install -y tcpdump
+X=$(hostname)
+sudo ip addr add 172.20.15.${X: -1}/32 dev lo
+case $(hostname) in
+    R1)
+        sudo ip route add 172.20.15.3/32 encap mpls 100 via inet 192.168.12.2
+        ;;
+    R2)
+        sudo modprobe mpls_router
+        sudo sysctl net.mpls.conf.eth2.input=1
+        sudo sysctl net.mpls.conf.eth1.input=1
+        sudo sysctl net.mpls.platform_labels=2048
+        sudo ip -M route add 100 via inet 192.168.23.3
+        sudo ip -M route add 200 via inet 192.168.12.1
+        ;;
+    R3)
+        sudo ip route add 172.20.15.1/32 encap mpls 200 via inet 192.168.23.2
+        ;;
+    *)
+        echo "unknown hostname $(hostname)"
+        ;;
+esac
