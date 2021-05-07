@@ -1,0 +1,13 @@
+[Unit]
+Description=renew lets encrypt certificate
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingPriority=7
+ExecStart=/home/yman/bin/cert_renewal
+
+[Install]
+WantedBy=multi-user.target

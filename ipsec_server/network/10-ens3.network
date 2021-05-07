@@ -1,0 +1,9 @@
+### Hetzner Online GmbH installimage
+[Match]
+Name=ens3
+
+[Network]
+DHCP=ipv4
+#Address=2001:db8:644a:83d::2/64
+Gateway=172.31.1.1
+Gateway=fe80::1

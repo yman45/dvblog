@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+CERTBOT_BIN='/usr/bin/certbot'
+NFT_BIN='/usr/bin/nft'
+BOTTOM_HANDLE=11
+
+"$NFT_BIN" insert rule inet filter input handle "$BOTTOM_HANDLE" tcp dport 80 accept
+"$CERTBOT_BIN" renew --verbose
+systemctl reload nftables.service

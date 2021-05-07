@@ -1,0 +1,7 @@
+[Match]
+# always match
+
+[NetDev]
+Description=loopback interface
+Name=dummy0
+Kind=dummy
